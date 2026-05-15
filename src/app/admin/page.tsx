@@ -1,12 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          setError('Not logged in. Please log in to access admin tools.');
+          setLoading(false);
+          return;
+        }
+
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        if (!adminEmail) {
+          setError('Admin email not configured');
+          setLoading(false);
+          return;
+        }
+
+        if (user.email?.toLowerCase() !== adminEmail.toLowerCase()) {
+          setError('You are not authorised to access this page.');
+          setLoading(false);
+          return;
+        }
+
+        setIsAdmin(true);
+        setLoading(false);
+      } catch {
+        setError('Error checking authentication');
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleCatalogueImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,8 +74,8 @@ export default function AdminPage() {
 
       setMessage({ type: 'success', text: `Imported ${data.data?.count || 0} items` });
       router.refresh();
-    } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
       setLoading(false);
     }
@@ -63,8 +105,8 @@ export default function AdminPage() {
 
       setMessage({ type: 'success', text: `Imported ${data.data?.count || 0} collection items` });
       router.refresh();
-    } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
       setLoading(false);
     }
@@ -92,12 +134,40 @@ export default function AdminPage() {
       document.body.removeChild(a);
 
       setMessage({ type: 'success', text: 'Collection exported successfully' });
-    } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Export failed' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Export failed' });
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <header className="space-y-2">
+          <p className="text-xs uppercase tracking-widest text-accent">Admin</p>
+          <h1 className="text-4xl font-semibold tracking-tight">Admin Tools</h1>
+        </header>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !isAdmin) {
+    return (
+      <div className="space-y-8">
+        <header className="space-y-2">
+          <p className="text-xs uppercase tracking-widest text-accent">Admin</p>
+          <h1 className="text-4xl font-semibold tracking-tight">Admin Tools</h1>
+        </header>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          {error || 'Not authorised'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -21,41 +21,34 @@ export async function GET(request: NextRequest): Promise<Response> {
       MAX_PAGE_SIZE,
       Math.max(1, parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10))
     )
-    const isCollected = searchParams.get('collected')
-    const series = searchParams.get('series')
     const offset = (page - 1) * limit
 
-    let query = supabase
+    const { data, error, count } = await supabase
       .from('user_items')
       .select(
         `
         *,
-        catalogue_item:catalogue_items (
+        item:items (
           id,
           name,
-          series,
-          series_number,
+          manufacturer,
+          range_name,
+          reference_number,
+          scale,
+          livery,
           description,
           image_url,
           release_year,
-          is_limited
+          rarity,
+          status
         )
       `,
         { count: 'exact' }
       )
       .eq('user_id', userId)
+      .eq('collected', true)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
-
-    if (isCollected !== null) {
-      query = query.eq('is_collected', isCollected === 'true')
-    }
-
-    if (series) {
-      query = query.eq('catalogue_items.series', series)
-    }
-
-    const { data, error, count } = await query
 
     if (error) {
       return internalError('Failed to fetch collection')

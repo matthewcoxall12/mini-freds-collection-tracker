@@ -1,47 +1,149 @@
-﻿import Link from "next/link";
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useCollection } from '@/context/CollectionContext';
+
+interface DashStats {
+  owned: number;
+  catalogueTotal: number;
+  totalValue: number;
+  priorityCount: number;
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function DashLink({ href, title, desc, badge }: { href: string; title: string; desc: string; badge?: string | number }) {
+  return (
+    <Link href={href} className="rounded-lg border border-border bg-surface p-5 hover:border-accent hover:bg-surface-muted transition flex items-start justify-between gap-3">
+      <div>
+        <h2 className="font-semibold text-foreground">{title}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+      </div>
+      {badge !== undefined && badge !== 0 && (
+        <span className="flex-shrink-0 mt-0.5 text-xs font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">{badge}</span>
+      )}
+    </Link>
+  );
+}
 
 export default function HomePage() {
-  const stats = { owned: 0, missing: 0, completion: 0 };
+  const { user, isLoading } = useCollection();
+  const [stats, setStats] = useState<DashStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || isLoading) return;
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const [collRes, catRes, missingRes] = await Promise.all([
+          fetch('/api/collection?limit=500'),
+          fetch('/api/items?limit=1'),
+          fetch('/api/missing?limit=1'),
+        ]);
+        if (!collRes.ok || !catRes.ok) return;
+        const [collData, catData] = await Promise.all([collRes.json(), catRes.json()]);
+        const items: Array<{ purchase_price: number | null; user_item?: { priority_wanted?: boolean } }> = collData.data ?? [];
+        const totalValue = items.reduce((sum, e) => sum + (e.purchase_price ?? 0), 0);
+
+        let priorityCount = 0;
+        if (missingRes.ok) {
+          const missingData = await missingRes.json();
+          priorityCount = missingData.data?.filter((i: { user_item?: { priority_wanted?: boolean } }) => i.user_item?.priority_wanted).length ?? 0;
+        }
+
+        setStats({
+          owned: collData.total ?? items.length,
+          catalogueTotal: catData.total ?? 0,
+          totalValue,
+          priorityCount,
+        });
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+  }, [user, isLoading]);
+
+  const completion = stats && stats.catalogueTotal > 0
+    ? Math.round((stats.owned / stats.catalogueTotal) * 100)
+    : 0;
+
+  const missing = stats ? stats.catalogueTotal - stats.owned : 0;
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-accent">Dashboard</p>
-        <h1 className="text-4xl font-semibold tracking-tight">Your collection at a glance</h1>
-        <p className="text-muted-foreground max-w-2xl">Track every Austin A35 van model you own, what you&apos;re hunting for, and your completion percentage.</p>
+        <h1 className="text-4xl font-semibold tracking-tight">Mini Freds</h1>
+        <p className="text-muted-foreground max-w-2xl">Track every Austin A35 van diecast model you own, what you&apos;re hunting for, and your completion percentage.</p>
       </header>
 
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Owned" value={stats.owned} />
-        <StatCard label="Missing" value={stats.missing} />
-        <StatCard label="Completion" value={`${stats.completion}%`} />
-        <StatCard label="Collection Value" value="£0" />
-      </section>
+      {user ? (
+        statsLoading || isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border bg-surface p-4 animate-pulse">
+                <div className="h-2.5 bg-surface-muted rounded w-2/3 mb-2" />
+                <div className="h-7 bg-surface-muted rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : stats ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard label="Owned" value={stats.owned} sub={`of ${stats.catalogueTotal}`} />
+            <StatCard label="Missing" value={missing} />
+            <StatCard label="Completion" value={`${completion}%`} />
+            <StatCard label="Collection Value" value={`£${stats.totalValue.toFixed(2)}`} />
+          </div>
+        ) : null
+      ) : (
+        <div className="rounded-lg border border-border bg-surface p-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium text-foreground">Track your collection</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Sign in to see your stats and mark items as owned.</p>
+          </div>
+          <Link href="/signin" className="text-sm text-accent hover:underline flex-shrink-0">Sign in →</Link>
+        </div>
+      )}
 
-      <section className="grid sm:grid-cols-2 gap-4">
-        <DashLink href="/catalogue" title="Browse Catalogue" desc="Explore all known Austin A35 van models." />
-        <DashLink href="/collection" title="My Collection" desc="Items you&apos;ve logged as owned." />
-        <DashLink href="/missing" title="Missing Items" desc="Your shopping/hunting list." />
-        <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue (restricted)." />
-      </section>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <DashLink
+          href="/catalogue"
+          title="Browse Catalogue"
+          desc="Explore all known Austin A35 van models."
+          badge={stats?.catalogueTotal}
+        />
+        {user && (
+          <>
+            <DashLink
+              href="/collection"
+              title="My Collection"
+              desc="Items you've logged as owned."
+              badge={stats?.owned}
+            />
+            <DashLink
+              href="/missing"
+              title="Still to Find"
+              desc="Your shopping and hunting list."
+              badge={missing || undefined}
+            />
+          </>
+        )}
+        {!user && (
+          <DashLink href="/signin" title="Sign In" desc="Private tracker — sign in to access your collection." />
+        )}
+        <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
+      </div>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function DashLink({ href, title, desc }: { href: string; title: string; desc: string }) {
-  return (
-    <Link href={href} className="rounded-lg border border-border bg-surface p-5 hover:border-accent hover:bg-surface-muted transition">
-      <h2 className="font-semibold text-foreground">{title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
-    </Link>
   );
 }

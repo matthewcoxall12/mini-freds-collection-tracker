@@ -1,14 +1,17 @@
-﻿import type { ItemRarity, ItemStatus, ItemScale } from "./item";
+﻿import type { ItemRarity, ItemStatus } from "./item";
 
-export type SortField = "name" | "manufacturer" | "release_year" | "rarity";
+export type SortField = "name" | "manufacturer" | "reference_number" | "rarity" | "status" | "updated_at";
 export type SortDirection = "asc" | "desc";
+export type CollectFilter = "all" | "owned" | "missing";
+export type ViewMode = "grid" | "list";
 
 export interface CatalogueFilters {
   query: string;
   manufacturers: string[];
-  scales: ItemScale[];
+  scales: string[];
   rarities: ItemRarity[];
   statuses: ItemStatus[];
+  collectFilter: CollectFilter;
 }
 
 export interface SortOption {
@@ -22,6 +25,7 @@ export const DEFAULT_FILTERS: CatalogueFilters = {
   scales: [],
   rarities: [],
   statuses: [],
+  collectFilter: "all",
 };
 
 export const DEFAULT_SORT: SortOption = {

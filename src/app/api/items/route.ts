@@ -17,26 +17,46 @@ export async function GET(request: NextRequest): Promise<Response> {
       MAX_PAGE_SIZE,
       Math.max(1, parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10))
     )
-    const manufacturer = searchParams.get('manufacturer')
-    const search = searchParams.get('search')
+    const manufacturersParam = searchParams.get('manufacturers')
+    const scalesParam = searchParams.get('scales')
+    const statusesParam = searchParams.get('statuses')
+    const raritiesParam = searchParams.get('rarities')
+    const query = searchParams.get('query')
+    const sortField = searchParams.get('sort') ?? 'manufacturer'
+    const sortDir = searchParams.get('dir') ?? 'asc'
     const offset = (page - 1) * limit
 
-    let query = supabase
+    const validSortFields = ['manufacturer', 'name', 'reference_number', 'rarity', 'status', 'updated_at']
+    const orderField = validSortFields.includes(sortField) ? sortField : 'manufacturer'
+
+    let dbQuery = supabase
       .from('items')
       .select('*', { count: 'exact' })
-      .order('manufacturer', { ascending: true })
+      .order(orderField, { ascending: sortDir !== 'desc' })
       .order('name', { ascending: true })
       .range(offset, offset + limit - 1)
 
-    if (manufacturer) {
-      query = query.eq('manufacturer', manufacturer)
+    if (manufacturersParam) {
+      const mfrs = manufacturersParam.split(',').filter(Boolean)
+      if (mfrs.length > 0) dbQuery = dbQuery.in('manufacturer', mfrs)
+    }
+    if (scalesParam) {
+      const scales = scalesParam.split(',').filter(Boolean)
+      if (scales.length > 0) dbQuery = dbQuery.in('scale', scales)
+    }
+    if (statusesParam) {
+      const statuses = statusesParam.split(',').filter(Boolean)
+      if (statuses.length > 0) dbQuery = dbQuery.in('status', statuses)
+    }
+    if (raritiesParam) {
+      const rarities = raritiesParam.split(',').filter(Boolean)
+      if (rarities.length > 0) dbQuery = dbQuery.in('rarity', rarities)
+    }
+    if (query) {
+      dbQuery = dbQuery.or(`name.ilike.%${query}%,manufacturer.ilike.%${query}%,reference_number.ilike.%${query}%,livery.ilike.%${query}%`)
     }
 
-    if (search) {
-      query = query.ilike('name', `%${search}%`)
-    }
-
-    const { data, error, count } = await query
+    const { data, error, count } = await dbQuery
 
     if (error) {
       return internalError('Failed to fetch items')

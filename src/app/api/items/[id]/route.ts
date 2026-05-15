@@ -4,6 +4,28 @@ import { requireAdmin } from '@/lib/auth'
 import { validateUpdateItem } from '@/lib/validation'
 import { ok, badRequest, notFound, internalError } from '@/lib/responses'
 
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  try {
+    const { id } = await params
+    const supabase = await createServerClient()
+
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !data) return notFound('Item')
+    return ok(data)
+  } catch (err) {
+    console.error('[GET /api/items/[id]]', err)
+    return internalError()
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

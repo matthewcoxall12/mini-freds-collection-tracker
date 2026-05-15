@@ -4,11 +4,13 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { NAV_ITEMS } from "@/lib/constants";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useCollection } from "@/context/CollectionContext";
 import { cn } from "@/lib/cn";
 
 export function TopNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut, isLoading } = useCollection();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
@@ -33,7 +35,19 @@ export function TopNav() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button type="button" onClick={() => setMobileOpen(!mobileOpen)} 
+          {!isLoading && (
+            user ? (
+              <button type="button" onClick={signOut}
+                className="hidden md:inline-flex text-xs text-muted-foreground hover:text-foreground transition px-2 py-1">
+                Sign out
+              </button>
+            ) : (
+              <Link href="/signin" className="hidden md:inline-flex text-xs text-accent hover:text-accent-hover transition px-2 py-1 border border-accent/40 rounded-md">
+                Sign in
+              </Link>
+            )
+          )}
+          <button type="button" onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-border bg-surface hover:bg-surface-muted">
             {mobileOpen ? "✕" : "≡"}
           </button>
