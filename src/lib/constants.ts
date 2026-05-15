@@ -1,6 +1,6 @@
 ﻿export const APP_NAME = "Mini Freds Collection Tracker";
 export const APP_TAGLINE = "A collector's archive";
-export const DEFAULT_USER_ID = "default-user";
+export const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },

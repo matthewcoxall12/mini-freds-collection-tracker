@@ -100,10 +100,5 @@ CREATE INDEX idx_user_items_user_id ON user_items(user_id);
 CREATE INDEX idx_user_items_collected ON user_items(user_id, collected) WHERE collected = true;
 
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_items ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY items_select_public ON items FOR SELECT USING (true);
-CREATE POLICY user_items_select ON user_items FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY user_items_insert ON user_items FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY user_items_update ON user_items FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY user_items_delete ON user_items FOR DELETE USING (auth.uid() = user_id);
