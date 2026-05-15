@@ -1,23 +1,15 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { getSupabaseBrowser } from '@/lib/supabase-browser';
-import type { User } from '@supabase/supabase-js';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface CollectionContextType {
-  user: User | null;
-  isLoading: boolean;
   collectedIds: Set<string>;
   toggle: (itemId: string, collected: boolean) => Promise<{ error?: string }>;
-  signOut: () => Promise<void>;
 }
 
 const CollectionContext = createContext<CollectionContextType>({
-  user: null,
-  isLoading: true,
   collectedIds: new Set(),
   toggle: async () => ({}),
-  signOut: async () => {},
 });
 
 export function CollectionProvider({ children }: { children: React.ReactNode }) {

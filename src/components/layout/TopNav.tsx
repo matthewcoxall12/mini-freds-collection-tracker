@@ -10,7 +10,6 @@ import { cn } from "@/lib/cn";
 export function TopNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, signOut, isLoading } = useCollection();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
