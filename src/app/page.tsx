@@ -123,7 +123,7 @@ export default function HomePage() {
           desc="Explore all known Austin A35 van models."
           badge={stats?.catalogueTotal}
         />
-        {user && (
+        {user ? (
           <>
             <DashLink
               href="/collection"
@@ -137,12 +137,14 @@ export default function HomePage() {
               desc="Your shopping and hunting list."
               badge={missing || undefined}
             />
+            <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
+          </>
+        ) : (
+          <>
+            <DashLink href="/signin" title="Sign In" desc="Private tracker — sign in to access your collection." />
+            <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
           </>
         )}
-        {!user && (
-          <DashLink href="/signin" title="Sign In" desc="Private tracker — sign in to access your collection." />
-        )}
-        <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
       </div>
     </div>
   );

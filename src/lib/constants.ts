@@ -1,5 +1,5 @@
 ﻿export const APP_NAME = "Mini Freds Collection Tracker";
-export const APP_TAGLINE = "A collector'\''s archive";
+export const APP_TAGLINE = "A collector's archive";
 
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
