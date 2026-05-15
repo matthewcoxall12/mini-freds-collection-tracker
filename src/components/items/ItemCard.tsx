@@ -32,7 +32,6 @@ export function ItemCard({ item }: ItemCardProps) {
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) { window.location.href = `/signin?redirect=/catalogue`; return; }
     setToggling(true);
     const { error } = await toggle(item.id, !isCollected);
     if (error) setFeedback(error);

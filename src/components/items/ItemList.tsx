@@ -19,7 +19,6 @@ function ListRow({ item }: { item: ItemWithCollection }) {
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) { window.location.href = `/signin?redirect=/catalogue`; return; }
     setToggling(true);
     await toggle(item.id, !isCollected);
     setToggling(false);

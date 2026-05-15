@@ -25,10 +25,6 @@ export async function GET(request: NextRequest): Promise<Response> {
       .select(
         `
         *,
-      .from('user_items')
-      .select(
-        `
-        *,
         item:items (
           id,
           name,

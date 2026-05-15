@@ -99,12 +99,6 @@ export default function CataloguePage() {
             </div>
           )}
 
-          {!user && (
-            <p className="text-xs text-muted-foreground">
-              <a href="/signin" className="text-accent hover:underline">Sign in</a> to track which models you own.
-            </p>
-          )}
-
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {Array.from({ length: 10 }).map((_, i) => (
