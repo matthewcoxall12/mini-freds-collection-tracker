@@ -1,15 +1,12 @@
 import { type NextRequest } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth'
+import { DEFAULT_USER_ID } from '@/lib/constants'
 import { ok, badRequest, internalError } from '@/lib/responses'
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const supabase = await createServerClient()
-    const authResult = await requireAuth(supabase)
-    if (authResult instanceof Response) return authResult
-
-    const { userId } = authResult
+    const userId = DEFAULT_USER_ID
 
     let body: unknown
     try { body = await request.json() } catch {

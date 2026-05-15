@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth'
+import { DEFAULT_USER_ID } from '@/lib/constants'
 import { ok, badRequest, internalError } from '@/lib/responses'
 import { type ItemCondition, type BoxedStatus } from '@/types/database'
 
@@ -11,9 +11,9 @@ const VALID_BOXED_STATUS: BoxedStatus[] = ['boxed', 'unboxed', 'unknown']
 /**
  * POST /api/import/collection
  *
- * Allows a user to bulk-import their collection data.
+ * Allows bulk-import of collection data.
  * Matches each row to a catalogue item by name.
- * Creates or updates user_items entries for the authenticated user.
+ * Creates or updates user_items entries for the user.
  *
  * Body: Array of objects with item_name, condition, boxed_status, purchase_price.
  * Returns: { processed, matched, unmatched, errors }
@@ -21,11 +21,7 @@ const VALID_BOXED_STATUS: BoxedStatus[] = ['boxed', 'unboxed', 'unknown']
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const supabase = await createServerClient()
-
-    const authResult = await requireAuth(supabase)
-    if (authResult instanceof Response) return authResult
-
-    const { userId } = authResult
+    const userId = DEFAULT_USER_ID
 
     let body: unknown
     try {

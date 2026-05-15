@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth'
+import { DEFAULT_USER_ID } from '@/lib/constants'
 import { validateUpdateUserItem } from '@/lib/validation'
 import { ok, badRequest, notFound, forbidden, internalError } from '@/lib/responses'
 
@@ -11,11 +11,7 @@ export async function PATCH(
   try {
     const { id } = await params
     const supabase = await createServerClient()
-
-    const authResult = await requireAuth(supabase)
-    if (authResult instanceof Response) return authResult
-
-    const { userId } = authResult
+    const userId = DEFAULT_USER_ID
 
     let body: unknown
     try {

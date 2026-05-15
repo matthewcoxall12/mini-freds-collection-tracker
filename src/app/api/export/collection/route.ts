@@ -1,21 +1,17 @@
 import { createServerClient } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth'
+import { DEFAULT_USER_ID } from '@/lib/constants'
 import { internalError } from '@/lib/responses'
 
 /**
  * GET /api/export/collection
  *
- * Streams a CSV file of the authenticated user's full collection.
+ * Streams a CSV file of the user's full collection.
  * Includes catalogue item details alongside collection metadata.
  */
 export async function GET(): Promise<Response> {
   try {
     const supabase = await createServerClient()
-
-    const authResult = await requireAuth(supabase)
-    if (authResult instanceof Response) return authResult
-
-    const { userId } = authResult
+    const userId = DEFAULT_USER_ID
 
     const { data, error } = await supabase
       .from('user_items')
