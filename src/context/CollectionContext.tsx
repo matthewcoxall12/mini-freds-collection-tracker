@@ -37,22 +37,33 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
       return next;
     });
 
-    const response = await fetch('/api/collection/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item_id: itemId, collected }),
-    });
+    try {
+      const response = await fetch('/api/collection/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: itemId, collected }),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ error: 'Unknown error' }));
+        setCollectedIds(prev => {
+          const next = new Set(prev);
+          if (collected) next.delete(itemId); else next.add(itemId);
+          return next;
+        });
+        return { error: data.error || 'Failed to update collection' };
+      }
+
+      return {};
+    } catch (err) {
+      console.error('Toggle error:', err);
       setCollectedIds(prev => {
         const next = new Set(prev);
         if (collected) next.delete(itemId); else next.add(itemId);
         return next;
       });
-      return { error: 'Failed to update collection' };
+      return { error: 'Network error - failed to update collection' };
     }
-
-    return {};
   }, []);
 
   return (

@@ -33,11 +33,21 @@ export function ItemCard({ item }: ItemCardProps) {
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     setToggling(true);
-    const { error } = await toggle(item.id, !isCollected);
-    if (error) setFeedback(error);
-    else setFeedback(null);
-    setToggling(false);
-    setTimeout(() => setFeedback(null), 2000);
+    try {
+      const { error } = await toggle(item.id, !isCollected);
+      if (error) {
+        setFeedback(error);
+        setTimeout(() => setFeedback(null), 3000);
+      } else {
+        setFeedback(null);
+      }
+    } catch (err) {
+      console.error('Toggle failed:', err);
+      setFeedback('Error updating collection');
+      setTimeout(() => setFeedback(null), 3000);
+    } finally {
+      setToggling(false);
+    }
   };
 
   return (

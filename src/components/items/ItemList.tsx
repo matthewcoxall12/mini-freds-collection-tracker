@@ -20,8 +20,13 @@ function ListRow({ item }: { item: ItemWithCollection }) {
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     setToggling(true);
-    await toggle(item.id, !isCollected);
-    setToggling(false);
+    try {
+      await toggle(item.id, !isCollected);
+    } catch (err) {
+      console.error('Toggle failed:', err);
+    } finally {
+      setToggling(false);
+    }
   };
 
   return (
