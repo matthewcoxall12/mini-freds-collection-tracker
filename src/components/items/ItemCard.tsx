@@ -25,7 +25,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item }: ItemCardProps) {
-  const { collectedIds, toggle, user } = useCollection();
+  const { collectedIds, toggle } = useCollection();
   const [toggling, setToggling] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const isCollected = collectedIds.has(item.id);

@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { requireAuth } from '@/lib/auth'
+import { DEFAULT_USER_ID } from '@/lib/constants'
 import { paginated, internalError } from '@/lib/responses'
 
 const DEFAULT_PAGE_SIZE = 50
@@ -10,10 +10,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   try {
     const supabase = await createServerClient()
 
-    const authResult = await requireAuth(supabase)
-    if (authResult instanceof Response) return authResult
-
-    const { userId } = authResult
+    const userId = DEFAULT_USER_ID
 
     const searchParams = request.nextUrl.searchParams
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
@@ -24,6 +21,10 @@ export async function GET(request: NextRequest): Promise<Response> {
     const offset = (page - 1) * limit
 
     const { data, error, count } = await supabase
+      .from('user_items')
+      .select(
+        `
+        *,
       .from('user_items')
       .select(
         `

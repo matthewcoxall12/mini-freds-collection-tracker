@@ -9,7 +9,7 @@ import type { ItemWithCollection } from '@/types/item';
 import { DEFAULT_FILTERS, DEFAULT_SORT, type CatalogueFilters, type SortOption, type ViewMode } from '@/types/filters';
 
 export default function CataloguePage() {
-  const { collectedIds, user } = useCollection();
+  const { collectedIds } = useCollection();
   const [allItems, setAllItems] = useState<ItemWithCollection[]>([]);
   const [filters, setFilters] = useState<CatalogueFilters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);

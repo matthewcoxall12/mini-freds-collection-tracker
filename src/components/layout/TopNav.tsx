@@ -35,18 +35,6 @@ export function TopNav() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {!isLoading && (
-            user ? (
-              <button type="button" onClick={signOut}
-                className="hidden md:inline-flex text-xs text-muted-foreground hover:text-foreground transition px-2 py-1">
-                Sign out
-              </button>
-            ) : (
-              <Link href="/signin" className="hidden md:inline-flex text-xs text-accent hover:text-accent-hover transition px-2 py-1 border border-accent/40 rounded-md">
-                Sign in
-              </Link>
-            )
-          )}
           <button type="button" onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-border bg-surface hover:bg-surface-muted">
             {mobileOpen ? "✕" : "≡"}

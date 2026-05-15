@@ -21,41 +21,24 @@ const CollectionContext = createContext<CollectionContextType>({
 });
 
 export function CollectionProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [collectedIds, setCollectedIds] = useState<Set<string>>(new Set());
-  const supabaseRef = useRef<ReturnType<typeof getSupabaseBrowser> | null>(null);
 
   useEffect(() => {
-    if (!supabaseRef.current) supabaseRef.current = getSupabaseBrowser();
-    const supabase = supabaseRef.current;
-    const loadUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        const { data } = await supabase
-          .from('user_items')
-          .select('item_id')
-          .eq('user_id', user.id)
-          .eq('collected', true);
-        setCollectedIds(new Set((data ?? []).map(d => d.item_id)));
+    const loadCollection = async () => {
+      try {
+        const res = await fetch('/api/collection?limit=500');
+        if (!res.ok) return;
+        const data = await res.json();
+        setCollectedIds(new Set((data.data ?? []).map((d: { item_id: string }) => d.item_id)));
+      } catch (err) {
+        console.error('Failed to load collection:', err);
       }
-      setIsLoading(false);
     };
 
-    loadUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) setCollectedIds(new Set());
-    });
-
-    return () => subscription.unsubscribe();
+    loadCollection();
   }, []);
 
   const toggle = useCallback(async (itemId: string, collected: boolean): Promise<{ error?: string }> => {
-    if (!user) return { error: 'Not signed in' };
-
     setCollectedIds(prev => {
       const next = new Set(prev);
       if (collected) next.add(itemId); else next.delete(itemId);
@@ -78,17 +61,10 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     }
 
     return {};
-  }, [user]);
-
-  const signOut = useCallback(async () => {
-    await supabaseRef.current?.auth.signOut();
-    setUser(null);
-    setCollectedIds(new Set());
-    window.location.href = '/signin';
   }, []);
 
   return (
-    <CollectionContext.Provider value={{ user, isLoading, collectedIds, toggle, signOut }}>
+    <CollectionContext.Provider value={{ collectedIds, toggle }}>
       {children}
     </CollectionContext.Provider>
   );

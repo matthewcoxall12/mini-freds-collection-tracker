@@ -36,12 +36,10 @@ function DashLink({ href, title, desc, badge }: { href: string; title: string; d
 }
 
 export default function HomePage() {
-  const { user, isLoading } = useCollection();
   const [stats, setStats] = useState<DashStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || isLoading) return;
     const fetchStats = async () => {
       setStatsLoading(true);
       try {
@@ -72,7 +70,7 @@ export default function HomePage() {
       }
     };
     fetchStats();
-  }, [user, isLoading]);
+  }, []);
 
   const completion = stats && stats.catalogueTotal > 0
     ? Math.round((stats.owned / stats.catalogueTotal) * 100)
@@ -88,33 +86,23 @@ export default function HomePage() {
         <p className="text-muted-foreground max-w-2xl">Track every Austin A35 van diecast model you own, what you&apos;re hunting for, and your completion percentage.</p>
       </header>
 
-      {user ? (
-        statsLoading || isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-lg border border-border bg-surface p-4 animate-pulse">
-                <div className="h-2.5 bg-surface-muted rounded w-2/3 mb-2" />
-                <div className="h-7 bg-surface-muted rounded w-1/2" />
-              </div>
-            ))}
-          </div>
-        ) : stats ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Owned" value={stats.owned} sub={`of ${stats.catalogueTotal}`} />
-            <StatCard label="Missing" value={missing} />
-            <StatCard label="Completion" value={`${completion}%`} />
-            <StatCard label="Collection Value" value={`£${stats.totalValue.toFixed(2)}`} />
-          </div>
-        ) : null
-      ) : (
-        <div className="rounded-lg border border-border bg-surface p-6 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-medium text-foreground">Track your collection</p>
-            <p className="text-sm text-muted-foreground mt-0.5">Sign in to see your stats and mark items as owned.</p>
-          </div>
-          <Link href="/signin" className="text-sm text-accent hover:underline flex-shrink-0">Sign in →</Link>
+      {statsLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-surface p-4 animate-pulse">
+              <div className="h-2.5 bg-surface-muted rounded w-2/3 mb-2" />
+              <div className="h-7 bg-surface-muted rounded w-1/2" />
+            </div>
+          ))}
         </div>
-      )}
+      ) : stats ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Owned" value={stats.owned} sub={`of ${stats.catalogueTotal}`} />
+          <StatCard label="Missing" value={missing} />
+          <StatCard label="Completion" value={`${completion}%`} />
+          <StatCard label="Collection Value" value={`£${stats.totalValue.toFixed(2)}`} />
+        </div>
+      ) : null}
 
       <div className="grid sm:grid-cols-2 gap-4">
         <DashLink
@@ -123,28 +111,19 @@ export default function HomePage() {
           desc="Explore all known Austin A35 van models."
           badge={stats?.catalogueTotal}
         />
-        {user ? (
-          <>
-            <DashLink
-              href="/collection"
-              title="My Collection"
-              desc="Items you've logged as owned."
-              badge={stats?.owned}
-            />
-            <DashLink
-              href="/missing"
-              title="Still to Find"
-              desc="Your shopping and hunting list."
-              badge={missing || undefined}
-            />
-            <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
-          </>
-        ) : (
-          <>
-            <DashLink href="/signin" title="Sign In" desc="Private tracker — sign in to access your collection." />
-            <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
-          </>
-        )}
+        <DashLink
+          href="/collection"
+          title="My Collection"
+          desc="Items you've logged as owned."
+          badge={stats?.owned}
+        />
+        <DashLink
+          href="/missing"
+          title="Still to Find"
+          desc="Your shopping and hunting list."
+          badge={missing || undefined}
+        />
+        <DashLink href="/admin" title="Admin Tools" desc="Manage the catalogue and audit images." />
       </div>
     </div>
   );

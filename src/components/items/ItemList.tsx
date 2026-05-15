@@ -13,7 +13,7 @@ const STATUS_COLOURS: Record<string, string> = {
 };
 
 function ListRow({ item }: { item: ItemWithCollection }) {
-  const { collectedIds, toggle, user } = useCollection();
+  const { collectedIds, toggle } = useCollection();
   const [toggling, setToggling] = useState(false);
   const isCollected = collectedIds.has(item.id);
 

@@ -50,14 +50,13 @@ function MissingRow({
   item: MissingItem;
   onPriorityToggle: (itemId: string, current: boolean) => void;
 }) {
-  const { collectedIds, toggle, user } = useCollection();
+  const { collectedIds, toggle } = useCollection();
   const [toggling, setToggling] = useState(false);
   const isPriority = item.user_item?.priority_wanted ?? false;
   const isCollected = collectedIds.has(item.id);
 
   const handleCollect = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) { window.location.href = `/signin?redirect=/missing`; return; }
     setToggling(true);
     await toggle(item.id, !isCollected);
     setToggling(false);
@@ -136,7 +135,6 @@ function MissingRow({
 }
 
 export default function MissingPage() {
-  const { user } = useCollection();
   const [items, setItems] = useState<MissingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,16 +146,11 @@ export default function MissingPage() {
   const retry = () => setFetchTrigger(n => n + 1);
 
   useEffect(() => {
-    if (!user && !loading) return;
     const fetchMissing = async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch('/api/missing?limit=500');
-        if (res.status === 401) {
-          window.location.href = '/signin?redirect=/missing';
-          return;
-        }
         if (!res.ok) throw new Error(`Server error (${res.status})`);
         const data = await res.json();
         const fetched: MissingItem[] = data.data || [];
@@ -185,7 +178,6 @@ export default function MissingPage() {
   };
 
   const handlePriorityToggle = useCallback(async (itemId: string, current: boolean) => {
-    if (!user) { window.location.href = '/signin?redirect=/missing'; return; }
     const next = !current;
     setPriorityIds(prev => {
       const s = new Set(prev);
@@ -214,7 +206,7 @@ export default function MissingPage() {
           : i
       ));
     }
-  }, [user]);
+  }, []);
 
   const filtered = useMemo(() => {
     let result = items;

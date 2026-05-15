@@ -48,7 +48,7 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
 
 export default function ItemPage() {
   const { id } = useParams<{ id: string }>();
-  const { collectedIds, toggle, user } = useCollection();
+  const { collectedIds, toggle } = useCollection();
   const [item, setItem] = useState<Item | null>(null);
   const [userItem, setUserItem] = useState<UserItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,21 +76,19 @@ export default function ItemPage() {
 
   useEffect(() => {
     const fetchUserItem = async () => {
-      if (!user) { setUserItem(null); return; }
       const supabase = getSupabaseBrowser();
       const { data } = await supabase
         .from('user_items')
         .select('id, condition, boxed_status, purchase_price, purchase_date, personal_notes, priority_wanted, storage_location, watch_url')
         .eq('item_id', id)
-        .eq('user_id', user.id)
+        .eq('user_id', 'default-user')
         .maybeSingle();
       setUserItem(data ?? null);
     };
     fetchUserItem();
-  }, [id, user]);
+  }, [id]);
 
   const handleToggle = async () => {
-    if (!user) { window.location.href = `/signin?redirect=/item/${id}`; return; }
     setToggling(true);
     await toggle(id, !isCollected);
     setToggling(false);
