@@ -99,6 +99,47 @@ function parseListings(html: string): MarketplaceSearchResult[] {
   return results;
 }
 
+function buildRssUrl(query: string): string {
+  const params = new URLSearchParams({ _nkw: query, _rss: "1", LH_PrefLoc: "1" });
+  return `${EBAY_UK}/sch/i.html?${params.toString()}`;
+}
+
+function parseRss(xml: string): MarketplaceSearchResult[] {
+  const results: MarketplaceSearchResult[] = [];
+  const itemBlocks = xml.split(/<item>/i).slice(1);
+  for (const block of itemBlocks) {
+    const endIdx = block.indexOf("</item>");
+    const chunk = endIdx > 0 ? block.slice(0, endIdx) : block;
+
+    const titleMatch = chunk.match(/<title>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/title>/i);
+    const linkMatch = chunk.match(/<link>\s*([\s\S]*?)\s*<\/link>/i);
+    if (!titleMatch || !linkMatch) continue;
+    const title = decodeHtml(titleMatch[1].trim());
+    const href = linkMatch[1].trim().split("?")[0];
+    const itemId = extractItemId(href);
+    if (!itemId || !title) continue;
+
+    const descMatch = chunk.match(/<description>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/description>/i);
+    const desc = descMatch ? descMatch[1] : "";
+    const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const imageUrl = imgMatch ? decodeHtml(imgMatch[1]) : undefined;
+    const priceMatchDesc = desc.match(/(£|GBP\s?)([\d,]+(?:\.\d{2})?)/i);
+    const price = priceMatchDesc ? parseFloat(priceMatchDesc[2].replace(/,/g, "")) : undefined;
+
+    results.push({
+      provider: "ebay",
+      providerItemId: itemId,
+      title,
+      price: price !== undefined && !Number.isNaN(price) ? price : undefined,
+      currency: price !== undefined ? "GBP" : undefined,
+      itemWebUrl: href,
+      imageUrl: imageUrl && /^https?:\/\//.test(imageUrl) ? imageUrl : undefined,
+      listingStatus: "active",
+    });
+  }
+  return results;
+}
+
 export class EbayScanner implements MarketplaceScanner {
   readonly provider = "ebay" as const;
 
@@ -108,19 +149,33 @@ export class EbayScanner implements MarketplaceScanner {
 
   async search(query: MarketplaceQuery): Promise<MarketplaceSearchResult[]> {
     const limit = query.limit ?? 25;
-    const url = buildSearchUrl(query.query, limit);
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-GB,en;q=0.9",
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error(`eBay search returned ${res.status}`);
+    const headers = {
+      "User-Agent": USER_AGENT,
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9",
+      "Accept-Language": "en-GB,en;q=0.9",
+      Referer: "https://www.ebay.co.uk/",
+    };
+
+    // Try HTML scrape first
+    try {
+      const url = buildSearchUrl(query.query, limit);
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (res.ok) {
+        const html = await res.text();
+        const parsed = parseListings(html).slice(0, limit);
+        if (parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fall through to RSS
     }
-    const html = await res.text();
-    return parseListings(html).slice(0, limit);
+
+    // Fallback to RSS (less aggressive bot detection)
+    const rssUrl = buildRssUrl(query.query);
+    const rssRes = await fetch(rssUrl, { headers, cache: "no-store" });
+    if (!rssRes.ok) {
+      throw new Error(`eBay RSS returned ${rssRes.status}`);
+    }
+    const xml = await rssRes.text();
+    return parseRss(xml).slice(0, limit);
   }
 }
