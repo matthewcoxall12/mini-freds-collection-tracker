@@ -26,7 +26,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       .select('id, item_id, collected')
       .single()
 
-    if (error) return internalError('Failed to update collection')
+    if (error) {
+      console.error('Supabase error:', error)
+      return internalError(`Failed to update collection: ${error.message}`)
+    }
     return ok(data)
   } catch (err) {
     console.error('[POST /api/collection/toggle]', err)
