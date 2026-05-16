@@ -73,12 +73,15 @@ export default function CollectionPage() {
       setLoading(true);
       setError(null);
       try {
+        console.log('[CollectionPage] Fetching collection data');
         const [collRes, catRes] = await Promise.all([
           fetch(`/api/collection?limit=200&_=${Date.now()}`, { cache: 'no-store' }),
           fetch(`/api/items?limit=1&_=${Date.now()}`, { cache: 'no-store' }),
         ]);
+        console.log('[CollectionPage] Status: collection=', collRes.status, 'items=', catRes.status);
         if (!collRes.ok) throw new Error(`Server error (${collRes.status})`);
         const [collData, catData] = await Promise.all([collRes.json(), catRes.json()]);
+        console.log('[CollectionPage] Loaded', collData.data?.length ?? 0, 'items, total=', collData.total);
         setItems(collData.data || []);
         setCatalogueTotal(catData.total ?? 0);
       } catch (err) {

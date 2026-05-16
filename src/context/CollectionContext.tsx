@@ -18,12 +18,18 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const loadCollection = async () => {
       try {
+        console.log('[CollectionContext] Loading collection from /api/collection');
         const res = await fetch('/api/collection?limit=500', { cache: 'no-store' });
-        if (!res.ok) return;
+        console.log('[CollectionContext] Response status:', res.status);
+        if (!res.ok) {
+          console.error('[CollectionContext] Failed response:', res.status, await res.text());
+          return;
+        }
         const data = await res.json();
+        console.log('[CollectionContext] Loaded items:', data.data?.length ?? 0, data);
         setCollectedIds(new Set((data.data ?? []).map((d: { item_id: string }) => d.item_id)));
       } catch (err) {
-        console.error('Failed to load collection:', err);
+        console.error('[CollectionContext] Failed to load collection:', err);
       }
     };
 
@@ -38,14 +44,17 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     });
 
     try {
+      console.log('[Toggle] POST /api/collection/toggle', { item_id: itemId, collected });
       const response = await fetch('/api/collection/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item_id: itemId, collected }),
       });
+      console.log('[Toggle] Response status:', response.status);
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[Toggle] Failed:', data);
         setCollectedIds(prev => {
           const next = new Set(prev);
           if (collected) next.delete(itemId); else next.add(itemId);
@@ -54,9 +63,11 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
         return { error: data.error || 'Failed to update collection' };
       }
 
+      const result = await response.json();
+      console.log('[Toggle] Success:', result);
       return {};
     } catch (err) {
-      console.error('Toggle error:', err);
+      console.error('[Toggle] Network error:', err);
       setCollectedIds(prev => {
         const next = new Set(prev);
         if (collected) next.delete(itemId); else next.add(itemId);
