@@ -1,30 +1,22 @@
--- Fix RLS policies for user_items and items tables
--- Production was failing with RLS policy violations
+-- Fix RLS policies and FK constraints for single-user development mode
+-- Production was failing with RLS violations and FK constraint errors
+
+-- Drop FK constraint that requires user_id to exist in auth.users (we use a hardcoded UUID)
+ALTER TABLE user_items DROP CONSTRAINT IF EXISTS user_items_user_id_fkey;
 
 -- Disable RLS on items since it's a public read-only catalogue
 ALTER TABLE items DISABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS items_select_public ON items;
 
--- Enable RLS on user_items with permissive policy for anon users
+-- Enable RLS on user_items with permissive policies for anon users (single-user dev mode)
 ALTER TABLE user_items ENABLE ROW LEVEL SECURITY;
 
--- Allow anon users to select their own items
-CREATE POLICY user_items_select ON user_items
-  FOR SELECT
-  USING (true);
+DROP POLICY IF EXISTS user_items_select ON user_items;
+DROP POLICY IF EXISTS user_items_insert ON user_items;
+DROP POLICY IF EXISTS user_items_update ON user_items;
+DROP POLICY IF EXISTS user_items_delete ON user_items;
 
--- Allow anon users to insert their own items
-CREATE POLICY user_items_insert ON user_items
-  FOR INSERT
-  WITH CHECK (true);
-
--- Allow anon users to update their own items
-CREATE POLICY user_items_update ON user_items
-  FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
-
--- Allow anon users to delete their own items
-CREATE POLICY user_items_delete ON user_items
-  FOR DELETE
-  USING (true);
+CREATE POLICY user_items_select ON user_items FOR SELECT USING (true);
+CREATE POLICY user_items_insert ON user_items FOR INSERT WITH CHECK (true);
+CREATE POLICY user_items_update ON user_items FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY user_items_delete ON user_items FOR DELETE USING (true);
