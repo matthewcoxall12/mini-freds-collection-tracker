@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MarketplaceSection } from '@/components/admin/MarketplaceSection';
 
 const ADMIN_PASSWORD = 'coxall12';
 
@@ -178,6 +179,8 @@ export default function AdminPage() {
           </button>
         </section>
       </div>
+
+      <MarketplaceSection />
     </div>
   );
 }
