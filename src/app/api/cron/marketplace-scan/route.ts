@@ -6,11 +6,13 @@ import type { MarketplaceProvider, MarketplaceQuery } from "@/lib/marketplace/ty
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export const maxDuration = 300;
+// Hobby plan max is 60s. Pro is 300s. Keep at 60 for portability.
+export const maxDuration = 60;
 
-const MAX_QUERIES_PER_RUN = 18;
-const EBAY_LIMIT_PER_QUERY = 15;
-const VINTED_LIMIT_PER_QUERY = 12;
+// Hobby plan = 1 cron/day, so each run rotates by day-of-year through ~14 queries
+const MAX_QUERIES_PER_RUN = 14;
+const EBAY_LIMIT_PER_QUERY = 12;
+const VINTED_LIMIT_PER_QUERY = 10;
 
 function authorize(request: NextRequest): boolean {
   const secret = process.env.MARKETPLACE_SCAN_CRON_SECRET;
@@ -38,8 +40,11 @@ async function handle(request: NextRequest): Promise<Response> {
     return false;
   });
 
-  const hour = new Date().getUTCHours();
-  const offset = filtered.length > 0 ? (hour * MAX_QUERIES_PER_RUN) % filtered.length : 0;
+  // Rotate by day-of-year so all queries cycle through over consecutive days
+  const now = new Date();
+  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - start) / 86400000);
+  const offset = filtered.length > 0 ? (dayOfYear * MAX_QUERIES_PER_RUN) % filtered.length : 0;
   const rotated = [...filtered.slice(offset), ...filtered.slice(0, offset)];
 
   const queries: MarketplaceQuery[] = rotated.slice(0, MAX_QUERIES_PER_RUN).map((q) => ({
