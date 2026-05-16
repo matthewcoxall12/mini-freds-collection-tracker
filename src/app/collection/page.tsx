@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useCollection } from '@/context/CollectionContext';
 
 interface CollectedItem {
   id: string;
@@ -58,6 +59,7 @@ function OwnedRow({ entry }: { entry: CollectedItem }) {
 }
 
 export default function CollectionPage() {
+  const { collectedIds } = useCollection();
   const [items, setItems] = useState<CollectedItem[]>([]);
   const [catalogueTotal, setCatalogueTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -72,13 +74,9 @@ export default function CollectionPage() {
       setError(null);
       try {
         const [collRes, catRes] = await Promise.all([
-          fetch('/api/collection?limit=200', { cache: 'no-store' }),
-          fetch('/api/items?limit=1', { cache: 'no-store' }),
+          fetch(`/api/collection?limit=200&_=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`/api/items?limit=1&_=${Date.now()}`, { cache: 'no-store' }),
         ]);
-        if (collRes.status === 401) {
-          window.location.href = '/signin?redirect=/collection';
-          return;
-        }
         if (!collRes.ok) throw new Error(`Server error (${collRes.status})`);
         const [collData, catData] = await Promise.all([collRes.json(), catRes.json()]);
         setItems(collData.data || []);
@@ -90,7 +88,7 @@ export default function CollectionPage() {
       }
     };
     fetchData();
-  }, [fetchTrigger]);
+  }, [fetchTrigger, collectedIds.size]);
 
   const totalValue = items.reduce((sum, e) => sum + (e.purchase_price ?? 0), 0);
   const avgPrice = items.length > 0 ? totalValue / items.length : 0;

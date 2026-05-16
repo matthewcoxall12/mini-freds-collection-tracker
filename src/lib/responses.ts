@@ -3,7 +3,10 @@ import { type ValidationError } from '@/lib/validation'
 
 export function ok<T>(data: T, status = 200): Response {
   const body: ApiResponse<T> = { data, error: null }
-  return Response.json(body, { status })
+  return Response.json(body, {
+    status,
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' }
+  })
 }
 
 export function created<T>(data: T): Response {
@@ -17,7 +20,10 @@ export function paginated<T>(
   limit: number
 ): Response {
   const body: PaginatedResponse<T> = { data, error: null, total, page, limit }
-  return Response.json(body, { status: 200 })
+  return Response.json(body, {
+    status: 200,
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', 'Pragma': 'no-cache', 'Expires': '0' }
+  })
 }
 
 export function badRequest(message: string, errors?: ValidationError[]): Response {
