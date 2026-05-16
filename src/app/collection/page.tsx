@@ -72,8 +72,8 @@ export default function CollectionPage() {
       setError(null);
       try {
         const [collRes, catRes] = await Promise.all([
-          fetch('/api/collection?limit=200'),
-          fetch('/api/items?limit=1'),
+          fetch('/api/collection?limit=200', { cache: 'no-store' }),
+          fetch('/api/items?limit=1', { cache: 'no-store' }),
         ]);
         if (collRes.status === 401) {
           window.location.href = '/signin?redirect=/collection';

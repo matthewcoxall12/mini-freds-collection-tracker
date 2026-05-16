@@ -150,7 +150,7 @@ export default function MissingPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/missing?limit=500');
+        const res = await fetch('/api/missing?limit=500', { cache: 'no-store' });
         if (!res.ok) throw new Error(`Server error (${res.status})`);
         const data = await res.json();
         const fetched: MissingItem[] = data.data || [];

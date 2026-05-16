@@ -3,6 +3,9 @@ import { createServerClient } from '@/lib/supabase'
 import { DEFAULT_USER_ID } from '@/lib/constants'
 import { ok, badRequest, internalError } from '@/lib/responses'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const supabase = await createServerClient()

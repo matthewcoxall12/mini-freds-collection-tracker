@@ -18,7 +18,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const loadCollection = async () => {
       try {
-        const res = await fetch('/api/collection?limit=500');
+        const res = await fetch('/api/collection?limit=500', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         setCollectedIds(new Set((data.data ?? []).map((d: { item_id: string }) => d.item_id)));

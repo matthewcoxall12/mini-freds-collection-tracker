@@ -3,6 +3,9 @@ import { createServerClient } from '@/lib/supabase'
 import { DEFAULT_USER_ID } from '@/lib/constants'
 import { paginated, internalError } from '@/lib/responses'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 200
 

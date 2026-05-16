@@ -44,9 +44,9 @@ export default function HomePage() {
       setStatsLoading(true);
       try {
         const [collRes, catRes, missingRes] = await Promise.all([
-          fetch('/api/collection?limit=500'),
-          fetch('/api/items?limit=1'),
-          fetch('/api/missing?limit=1'),
+          fetch('/api/collection?limit=500', { cache: 'no-store' }),
+          fetch('/api/items?limit=1', { cache: 'no-store' }),
+          fetch('/api/missing?limit=1', { cache: 'no-store' }),
         ]);
         if (!collRes.ok || !catRes.ok) return;
         const [collData, catData] = await Promise.all([collRes.json(), catRes.json()]);
