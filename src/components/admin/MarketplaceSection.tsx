@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/cn';
 
-type Tab = 'scanner' | 'listings' | 'images' | 'candidates';
+type Tab = 'scanner' | 'listings' | 'images' | 'candidates' | 'missing';
 
 type ScanSummary = {
   provider: string;
@@ -163,7 +163,7 @@ function ScannerTab() {
   );
 }
 
-function ListingsTab({ filter }: { filter?: string }) {
+function ListingsTab({ filter, missingOnly }: { filter?: string; missingOnly?: boolean }) {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState('');
@@ -180,6 +180,7 @@ function ListingsTab({ filter }: { filter?: string }) {
         const sp = new URLSearchParams({ limit: '100', active_only: 'true' });
         if (provider) sp.set('provider', provider);
         if (matched) sp.set('matched_status', matched);
+        if (missingOnly) sp.set('missing_only', 'true');
         const res = await fetch(`/api/admin/marketplace/listings?${sp}`, { cache: 'no-store' });
         const data = await res.json();
         if (!cancelled) setItems(data.data || []);
@@ -189,7 +190,7 @@ function ListingsTab({ filter }: { filter?: string }) {
     };
     run();
     return () => { cancelled = true; };
-  }, [provider, matched, refreshTick]);
+  }, [provider, matched, refreshTick, missingOnly]);
 
   return (
     <div className="space-y-3">
@@ -327,12 +328,14 @@ export function MarketplaceSection() {
 
       <div className="flex gap-1 border-b border-border pb-2 flex-wrap">
         <TabBtn active={tab === 'scanner'} onClick={() => setTab('scanner')}>Scanner</TabBtn>
-        <TabBtn active={tab === 'listings'} onClick={() => setTab('listings')}>Listings</TabBtn>
+        <TabBtn active={tab === 'missing'} onClick={() => setTab('missing')}>Missing Finds</TabBtn>
+        <TabBtn active={tab === 'listings'} onClick={() => setTab('listings')}>All Listings</TabBtn>
         <TabBtn active={tab === 'images'} onClick={() => setTab('images')}>Image Candidates</TabBtn>
         <TabBtn active={tab === 'candidates'} onClick={() => setTab('candidates')}>New Variants</TabBtn>
       </div>
 
       {tab === 'scanner' && <ScannerTab />}
+      {tab === 'missing' && <ListingsTab missingOnly />}
       {tab === 'listings' && <ListingsTab />}
       {tab === 'images' && <ImageCandidatesTab />}
       {tab === 'candidates' && <ListingsTab filter="new_candidate" />}

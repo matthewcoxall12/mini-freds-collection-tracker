@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { useCollection } from '@/context/CollectionContext';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { DEFAULT_USER_ID } from '@/lib/constants';
+import { ItemMarketplaceSection } from '@/components/item/ItemMarketplaceSection';
 import type { Item } from '@/types/item';
 
 interface UserItemDetail {
@@ -215,6 +216,8 @@ export default function ItemPage() {
               {item.image_verified && <span className="ml-2 text-emerald-600 dark:text-emerald-400">· Verified</span>}
             </p>
           )}
+
+          <ItemMarketplaceSection itemId={id} />
         </div>
       </div>
     </div>

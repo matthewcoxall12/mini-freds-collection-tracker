@@ -32,6 +32,20 @@ export async function GET(request: NextRequest): Promise<Response> {
     const pmax = sp.get("price_max");
     if (pmax) q = q.lte("price", parseFloat(pmax));
 
+    if (sp.get("missing_only") === "true") {
+      const { DEFAULT_USER_ID } = await import("@/lib/constants");
+      const { data: owned } = await supabase
+        .from("user_items")
+        .select("item_id")
+        .eq("user_id", DEFAULT_USER_ID)
+        .eq("collected", true);
+      const ownedIds = (owned ?? []).map((r) => r.item_id);
+      q = q.not("item_id", "is", null);
+      if (ownedIds.length > 0) {
+        q = q.not("item_id", "in", `(${ownedIds.join(",")})`);
+      }
+    }
+
     const { data, error, count } = await q;
     if (error) return internalError(error.message);
     return paginated(data ?? [], count ?? 0, page, limit);
