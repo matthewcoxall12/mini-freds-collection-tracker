@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/cn';
 import { useCollection } from '@/context/CollectionContext';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 import type { Item } from '@/types/item';
 
 interface UserItemDetail {
@@ -81,7 +82,7 @@ export default function ItemPage() {
         .from('user_items')
         .select('id, condition, boxed_status, purchase_price, purchase_date, personal_notes, priority_wanted, storage_location, watch_url')
         .eq('item_id', id)
-        .eq('user_id', 'default-user')
+        .eq('user_id', DEFAULT_USER_ID)
         .maybeSingle();
       setUserItem(data ?? null);
     };
